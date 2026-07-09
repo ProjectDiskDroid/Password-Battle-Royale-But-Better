@@ -426,6 +426,62 @@ RULE_POOL = [
         "method": r_length_equals_digit_sum,
         "tier": 5,
     },
+    {
+        "id": "bookend_match",
+        "description": "{First and Last Character} must match",
+        "subtitle": "Case doesn't matter",
+        "method": r_bookend_match,
+        "tier": 2,
+    },
+    {
+        "id": "frequency_cap",
+        "description": "No character may appear more than {3 Times} in the password",
+        "subtitle": "Case-insensitive count",
+        "method": r_frequency_cap,
+        "tier": 3,
+    },
+    {
+        "id": "fibonacci_length",
+        "description": "Password {Length} must be a {Fibonacci Number}",
+        "subtitle": "1, 2, 3, 5, 8, 13, 21, 34...",
+        "method": r_fibonacci_length,
+        "tier": 3,
+    },
+    {
+        "id": "chess_piece",
+        "description": "Must include the name of a {Chess Piece}",
+        "subtitle": "king, queen, rook, bishop, knight, or pawn",
+        "method": r_chess_piece,
+        "tier": 2,
+    },
+    {
+        "id": "element_symbol",
+        "description": "Must include a {Periodic Table Element Symbol}",
+        "subtitle": "Two-letter symbols only, capitalization must match (e.g. \"Fe\", \"Au\", \"Na\")",
+        "method": r_element_symbol,
+        "tier": 3,
+    },
+    {
+        "id": "roman_numeral",
+        "description": "Must contain a valid {Roman Numeral}",
+        "subtitle": "At least 2 characters long, e.g. \"IV\", \"XL\", \"MCM\"",
+        "method": r_roman_numeral,
+        "tier": 4,
+    },
+    {
+        "id": "todays_day",
+        "description": "Must include {Today's Day of the Week}",
+        "subtitle": "Spelled out in full, e.g. \"monday\"",
+        "method": r_todays_day,
+        "tier": 2,
+    },
+    {
+        "id": "ascii_parity",
+        "description": "Sum of all character codes must be an {Even Number}",
+        "subtitle": "Add up every character's numeric code point",
+        "method": r_ascii_parity,
+        "tier": 2,
+    },
 ]
 
 RULE_LOOKUP = {rule["id"]: rule for rule in RULE_POOL}

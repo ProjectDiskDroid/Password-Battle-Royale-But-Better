@@ -1018,3 +1018,19 @@ GREEK_LETTERS = [
     "iota", "kappa", "lambda", "mu", "nu", "xi", "omicron", "pi", "rho",
     "sigma", "tau", "upsilon", "phi", "chi", "psi", "omega",
 ]
+
+CHESS_PIECES = ["king", "queen", "rook", "bishop", "knight", "pawn"]
+
+# Two-letter periodic table symbols only (single-letter symbols like C/O/N/H are
+# deliberately excluded - too easy to hit by accident, correctly-capitalized form)
+ELEMENT_SYMBOLS = [
+    "He", "Li", "Be", "Ne", "Na", "Mg", "Al", "Si", "Cl", "Ar",
+    "Ca", "Sc", "Ti", "Cr", "Mn", "Fe", "Co", "Ni", "Cu", "Zn",
+    "Ga", "Ge", "As", "Se", "Br", "Kr", "Rb", "Sr", "Zr", "Nb",
+    "Mo", "Tc", "Ru", "Rh", "Pd", "Ag", "Cd", "In", "Sn", "Sb",
+    "Te", "Xe", "Cs", "Ba", "Hf", "Ta", "Re", "Os", "Ir", "Pt",
+    "Au", "Hg", "Tl", "Pb", "Bi", "Po", "At", "Rn", "Fr", "Ra",
+    "Ac", "Th", "Pa", "Np", "Pu", "Am", "Cm", "Bk", "Cf", "Es",
+    "Fm", "Md", "No", "Lr", "Rf", "Db", "Sg", "Bh", "Hs", "Mt",
+    "Ds", "Rg", "Cn", "Nh", "Fl", "Mc", "Lv", "Ts", "Og",
+]

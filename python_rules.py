@@ -1,4 +1,7 @@
+import re
+import math
 import emoji
+from datetime import datetime
 from python_constants import *
 
 # ALL of the rule VALIDATOR FUNCTIONS for the game.
@@ -349,3 +352,53 @@ def r_exact_palindrome(password):
 def r_length_equals_digit_sum(password):
     digit_sum = sum(int(char) for char in password if char.isdigit())
     return len(password) == digit_sum
+
+# "{First and Last Character} must match"
+def r_bookend_match(password):
+    return len(password) >= 2 and password[0].lower() == password[-1].lower()
+
+# "No character may appear more than {3 Times} in the password"
+def r_frequency_cap(password):
+    password_lower = password.lower()
+    return all(password_lower.count(char) <= 3 for char in set(password_lower))
+
+# "Password {Length} must be a {Fibonacci Number}"
+def r_fibonacci_length(password):
+    length = len(password)
+    if length < 1:
+        return False
+    def is_perfect_square(x):
+        root = math.isqrt(x)
+        return root * root == x
+    return is_perfect_square(5 * length * length + 4) or is_perfect_square(5 * length * length - 4)
+
+# "Must include the name of a {Chess Piece}"
+def r_chess_piece(password):
+    password = password.lower()
+    return any(piece in password for piece in CHESS_PIECES)
+
+# "Must include a {Periodic Table Element Symbol} - capitalization must match"
+def r_element_symbol(password):
+    return any(symbol in password for symbol in ELEMENT_SYMBOLS)
+
+# "Must contain a valid {Roman Numeral}, at least 2 characters long"
+def r_roman_numeral(password):
+    password = password.upper()
+    roman_pattern = re.compile(r'^M{0,3}(CM|CD|D?C{0,3})(XC|XL|L?X{0,3})(IX|IV|V?I{0,3})$')
+    n = len(password)
+    for i in range(n):
+        for j in range(i + 2, n + 1):
+            substring = password[i:j]
+            if all(char in 'MDCLXVI' for char in substring) and roman_pattern.fullmatch(substring):
+                return True
+    return False
+
+# "Must include {Today's Day of the Week}"
+def r_todays_day(password):
+    password = password.lower()
+    today = datetime.now().strftime('%A').lower()
+    return today in password
+
+# "Sum of all character codes must be an {Even Number}"
+def r_ascii_parity(password):
+    return sum(ord(char) for char in password) % 2 == 0
