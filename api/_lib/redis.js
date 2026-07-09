@@ -18,3 +18,4 @@ export const REDIS_KEY_DEAD_USERS = 'password:users:dead';
 export const REDIS_KEY_LAST_UPDATED_TIMESTAMP = 'password:lastUpdated';
 export const REDIS_KEY_GAME_STATE = 'password:gameState';
 export const REDIS_KEY_KILL_COUNTS = 'password:killCounts';
+export const REDIS_KEY_LEADERBOARD = 'password:leaderboard';

@@ -1,0 +1,57 @@
+/* Shared design tokens - imported by both style.css (main game page) and
+   leaderboard.css (leaderboard page) so the two pages stay visually consistent. */
+
+:root {
+	--font: "JetBrains Mono", ui-monospace, "SFMono-Regular", Menlo, monospace;
+
+	/* Dark purple theme */
+	--bg: #0f0c17;
+	--bg-elevated: #1c1730;
+	--bg-elevated-hover: #251f3d;
+	--text: #e9e4f7;
+	--text-muted: #b3a4d6;
+	--primary: #c084fc;
+	--primary-strong: #a855f7;
+	--primary-dim: #7c3aed;
+	--border: rgba(196, 160, 255, 0.28);
+
+	font: 18px/145% var(--font);
+	letter-spacing: 0.18px;
+	color-scheme: dark;
+	color: var(--text);
+	background: var(--bg);
+	font-synthesis: none;
+	text-rendering: optimizeLegibility;
+	-webkit-font-smoothing: antialiased;
+	-moz-osx-font-smoothing: grayscale;
+
+	@media (max-width: 1024px) {
+		font-size: 16px;
+	}
+}
+
+html {
+	overflow: hidden;
+}
+
+body {
+	margin: 0;
+	overflow: hidden; /* prevent the parent itself from scrolling */
+	position: relative;
+
+	background-color: var(--bg);
+	background-image:
+	  radial-gradient(ellipse 80% 60% at 50% 0%, rgba(124, 58, 237, 0.22), transparent 70%),
+	  radial-gradient(ellipse 60% 40% at 50% 100%, rgba(124, 58, 237, 0.1), transparent 70%),
+	  url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='240' height='240'%3E%3Cfilter id='n'%3E%3CfeTurbulence baseFrequency='0.85' numOctaves='2' stitchTiles='stitch'/%3E%3CfeColorMatrix values='0 0 0 0 0.35 0 0 0 0 0.15 0 0 0 0 0.55 0 0 0 0.12 0'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");
+	background-blend-mode: normal, normal, screen;
+	box-shadow: none;
+}
+
+.animated-bg {
+	position: absolute;
+	inset: 0;
+	pointer-events: none;
+	overflow: hidden;
+	opacity: 20%;
+}

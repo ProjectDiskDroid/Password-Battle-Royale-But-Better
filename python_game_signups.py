@@ -15,7 +15,7 @@ import json
 from rich import print
 
 from sqlite_helper import create_tables, save_to_db
-from python_game_loop import push_update, GameState, play_round_start_audio, play_round_end_audio
+from python_game_loop import push_update, GameState, play_round_start_audio, play_round_end_audio, TWITCH_CHANNEL_NAME
 
 
 listening_to_chat = False # Flag that says "We're accepting signups for this round"
@@ -29,7 +29,7 @@ new_users = {}
 
 class TwitchBot(commands.Bot):
     def __init__(self):
-        self.CHANNEL_NAME = 'dougdoug'
+        self.CHANNEL_NAME = TWITCH_CHANNEL_NAME
         super().__init__(token=os.getenv('TWITCH_ACCESS_TOKEN'), prefix='?', initial_channels=[self.CHANNEL_NAME]) #connects to twitch channel
     
     async def event_ready(self):

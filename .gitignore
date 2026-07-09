@@ -32,4 +32,6 @@ sounds
 
 # Local runtime data / backups (not source)
 passwords.db
+passwords.db-shm
+passwords.db-wal
 stream_answers_match_*.txt

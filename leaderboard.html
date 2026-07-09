@@ -1,0 +1,40 @@
+<!doctype html>
+<html lang="en">
+	<head>
+		<meta charset="UTF-8" />
+		<link rel="icon" type="image/svg+xml" href="/favicon.svg" />
+		<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+		<title>Leaderboard - Password Battle Royale</title>
+		<script type="module" src="/src/leaderboard.js"></script>
+
+		<link rel="preconnect" href="https://fonts.googleapis.com">
+		<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+		<link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:ital,wght@0,100..800;1,100..800&display=swap" rel="stylesheet">
+	</head>
+
+	<body>
+
+	<a id="back-link" href="/">← Back to Game</a>
+
+	<div id="titles-container">
+		<div id="title">🏆 LEADERBOARD</div>
+	</div>
+
+	<div id="leaderboard-columns">
+
+		<div class="leaderboard-column">
+			<div class="leaderboard-column-title">Top Wins</div>
+			<div id="leaderboard-winners"></div>
+		</div>
+
+		<div id="leaderboard-vertical-divider"></div>
+
+		<div class="leaderboard-column">
+			<div class="leaderboard-column-title">☠️ Most Common Causes of Death</div>
+			<div id="leaderboard-killers"></div>
+		</div>
+
+	</div>
+
+	</body>
+</html>

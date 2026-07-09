@@ -59,10 +59,10 @@ function createStarTunnel(container) {
 
     const STAR_COUNT = 450;
     const COLORS = [
-        [120,  0,   0  ],  // dark red
-        [180,  20,  20 ],  // mid red
-        [220,  60,  60 ],  // light red
-        [255,  120, 120],  // pale red
+        [76,   29,  149],  // dark purple
+        [124,  58,  237],  // mid purple
+        [168,  85,  247],  // light purple
+        [216,  180, 254],  // pale purple
     ];
 
     const stars = Array.from({ length: STAR_COUNT }, () => ({

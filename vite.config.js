@@ -1,4 +1,5 @@
 import { defineConfig } from 'vite';
+import { resolve } from 'path';
 export default defineConfig({
   root: './',
   server: {
@@ -9,6 +10,14 @@ export default defineConfig({
     }
   },
   build: {
-    outDir: 'dist'
+    outDir: 'dist',
+    rollupOptions: {
+      // Multi-page build - the leaderboard lives on its own page (leaderboard.html),
+      // so both entry points need to be listed here or only index.html would get built.
+      input: {
+        main: resolve(__dirname, 'index.html'),
+        leaderboard: resolve(__dirname, 'leaderboard.html'),
+      }
+    }
   }
 });

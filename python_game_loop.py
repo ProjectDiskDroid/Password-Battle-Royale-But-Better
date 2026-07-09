@@ -45,15 +45,24 @@ previously_submitted_passwords = set[str]()
 
 ALREADY_SUBMITTED_FAIL_MESSAGE = "Submitted a password that someone else already had!"
 DIDNT_SUBMIT_FAIL_MESSAGE = "Failed to submit a password in time."
-SERVER_URL = 'https://password-battle-royale-sigma.vercel.app/api/passwords' # Replace with your server URL
 
 load_dotenv('.env.local') # Loads the local env file so you can os.getenv() it
 CLIENT_SECRET = os.getenv('UPDATE_DB_KEY')
 
+# Both overridable via .env.local for local testing (point at `vercel dev` and/or a test
+# Twitch channel instead of the real production site/channel) - see CLAUDE.md.
+SERVER_URL = os.getenv('SERVER_URL', 'https://password-battle-royale-sigma.vercel.app/api/passwords')
+TWITCH_CHANNEL_NAME = os.getenv('TWITCH_CHANNEL_NAME', 'dougdoug')
+
+# Set to True the moment the current match's leaderboard result (win/losses) has been
+# recorded, so a match's outcome only ever gets counted once even if more rounds are
+# played afterward. Reset back to False whenever a new match starts (round_number == 1).
+leaderboard_finalized_this_match = False
+
 class TwitchBot(commands.Bot):
 
     def __init__(self):
-        self.CHANNEL_NAME = 'dougdoug'
+        self.CHANNEL_NAME = TWITCH_CHANNEL_NAME
         super().__init__(token=os.getenv('TWITCH_ACCESS_TOKEN'), prefix='?', initial_channels=[self.CHANNEL_NAME]) #connects to twitch channel
     
     async def event_ready(self):
@@ -116,7 +125,7 @@ class KeyPressBot():
         print("[blue]Keypress bot running!")
 
     def run(self):
-        global listening_to_chat, MATCH_NUMBER, round_number, living_users, dead_users
+        global listening_to_chat, MATCH_NUMBER, round_number, living_users, dead_users, leaderboard_finalized_this_match
 
         while True:
 
@@ -129,12 +138,14 @@ class KeyPressBot():
 
             # Round 1 means a brand new match is starting - wipe the drawn rule pool so
             # this match gets a fresh random draw instead of reusing/excluding rules from
-            # whatever match was played before it.
+            # whatever match was played before it. Also allow this new match to record its
+            # own leaderboard result once it eventually concludes.
             if round_number == 1:
                 rules_manager.start_new_match()
+                leaderboard_finalized_this_match = False
 
             # First ping Vercel for current scores
-            _, latest_living_users, dead_users = get_passwords()
+            _, latest_living_users, dead_users, leaderboard = get_passwords()
             latest_living_users = latest_living_users or [] # If null, set it to an empty array
             dead_users = dead_users or [] # If null, set it to an empty array
             print("[blue]Got latest info from server...")
@@ -211,13 +222,26 @@ class KeyPressBot():
             # Sort the living_users_array in order of password length
             living_users_array.sort(key=lambda u: len(u['password']))
 
+            # If the match has now concluded (0 or 1 people left standing), record the
+            # result to the persistent leaderboard - but only once per match.
+            leaderboard_to_push = None
+            if len(living_users_array) <= 1 and not leaderboard_finalized_this_match:
+                leaderboard = update_leaderboard(leaderboard, dead_users, living_users_array)
+                leaderboard_finalized_this_match = True
+                leaderboard_to_push = leaderboard
+                save_to_db("leaderboard", json.dumps(leaderboard))
+                if living_users_array:
+                    print(f"[green]MATCH OVER! Winner: {living_users_array[0]['username']}")
+                else:
+                    print("[yellow]MATCH OVER! No survivors.")
+
             # Save everything to SQLite, just as a backup in case some shit goes wrong
             save_to_db("rules", json.dumps(rule_descriptions))
             save_to_db("living_users", json.dumps(living_users_array))
             save_to_db("dead_users", json.dumps(dead_users))
 
             # Finally, sends the updated list of users & scores to Vercel to store
-            push_update(rule_descriptions, living_users_array, dead_users, GameState.INTERMISSION, calculate_kill_counts(dead_users))
+            push_update(rule_descriptions, living_users_array, dead_users, GameState.INTERMISSION, calculate_kill_counts(dead_users), leaderboard_to_push)
             
             # Now that this round is finished, increment round number
             print(f"[yellow]FINISHED ROUND {round_number}")
@@ -226,6 +250,31 @@ class KeyPressBot():
             
 
 
+
+# Mutates (and returns) the persistent leaderboard dict with this match's outcome.
+# Called once, at the moment a match concludes (0 or 1 living users remaining) - NOT every round,
+# since dead_users/living_users_array only reflect the full match roster right when it's finished.
+# Everyone who played (won or lost) gets matchesPlayed incremented; the sole survivor (if any)
+# gets a win; every death this match adds to the lifetime (all-time, cross-match) kill counts.
+def update_leaderboard(leaderboard, dead_users, living_users_array):
+    leaderboard = leaderboard or {}
+    players = leaderboard.setdefault('players', {})
+    lifetime_kill_counts = leaderboard.setdefault('lifetimeKillCounts', {})
+
+    all_participants = {user['username'] for user in dead_users} | {user['username'] for user in living_users_array}
+    for username in all_participants:
+        stats = players.setdefault(username, {'wins': 0, 'matchesPlayed': 0})
+        stats['matchesPlayed'] += 1
+
+    if len(living_users_array) == 1:
+        winner = living_users_array[0]['username']
+        players[winner]['wins'] += 1
+
+    for user in dead_users:
+        reason = user['failure_message']
+        lifetime_kill_counts[reason] = lifetime_kill_counts.get(reason, 0) + 1
+
+    return leaderboard
 
 # Creates a dict mapping each failure reason to the number of deaths
 # This is passed as a separate piece of info because there are 2 ways to die that aren't part of a rule (submitting someone else's submission, or not submitting in time)
@@ -246,9 +295,13 @@ def get_passwords():
     rules = data["rules"]
     living_users = data["livingUsers"]
     dead_users = data["deadUsers"]
-    return rules, living_users, dead_users
+    leaderboard = data.get("leaderboard")
+    return rules, living_users, dead_users, leaderboard
 
-def push_update(rules, living_users, dead_users, game_state=GameState.INTERMISSION, kill_counts={}):
+# leaderboard is deliberately None by default - unlike the other fields, it should only ever
+# be sent when we actually want to overwrite it (i.e. right when a match concludes), since
+# the server just skips falsy fields on POST rather than clearing them.
+def push_update(rules, living_users, dead_users, game_state=GameState.INTERMISSION, kill_counts={}, leaderboard=None):
     r = requests.post(
         SERVER_URL,
         json = {
@@ -258,6 +311,7 @@ def push_update(rules, living_users, dead_users, game_state=GameState.INTERMISSI
 			'deadUsers': dead_users,
             'gameState': game_state.value,
             'killCounts': kill_counts,
+            'leaderboard': leaderboard,
 		}
     )
     r.raise_for_status()

@@ -45,9 +45,26 @@ STRING: "{
 	etc
 }"
 
+// Persists ACROSS matches (unlike everything else above, which resets each match).
+// "players" tracks wins/matchesPlayed per username. "lifetimeKillCounts" is the
+// all-time version of REDIS_KEY_KILL_COUNTS above - same failure_message keys, just
+// never reset. Only written when a match actually concludes (0 or 1 living users left).
+KEY: REDIS_KEY_LEADERBOARD
+STRING: "{
+    "players": {
+        "someUsername": { "wins": 3, "matchesPlayed": 7 },
+        etc
+    },
+    "lifetimeKillCounts": {
+        "Submitted a password that someone else already had!": 140,
+        "Must contain {5+ Characters}": 22,
+        etc
+    }
+}"
+
 */
 
-import {redis, pollLimiter, REDIS_KEY_RULES, REDIS_KEY_LIVING_USERS, REDIS_KEY_DEAD_USERS, REDIS_KEY_LAST_UPDATED_TIMESTAMP, REDIS_KEY_GAME_STATE, REDIS_KEY_KILL_COUNTS} from './_lib/redis.js';
+import {redis, pollLimiter, REDIS_KEY_RULES, REDIS_KEY_LIVING_USERS, REDIS_KEY_DEAD_USERS, REDIS_KEY_LAST_UPDATED_TIMESTAMP, REDIS_KEY_GAME_STATE, REDIS_KEY_KILL_COUNTS, REDIS_KEY_LEADERBOARD} from './_lib/redis.js';
 
  // 'UPDATE_DB_KEY' is an env variable that I set on Vercel - only a client who has this same var can update the server
 const CLIENT_SECRET = process.env.UPDATE_DB_KEY;  
@@ -73,12 +90,13 @@ export default async function handler(req, res) {
 
 			// Retrieve all rules, living users, and dead users for the client
 			// Promise.all fires all three requests at the same time and waits for all of them to finish before continuing, makes it much faster
-			const [rules, livingUsers, deadUsers, gameState, killCounts] = await Promise.all([
+			const [rules, livingUsers, deadUsers, gameState, killCounts, leaderboard] = await Promise.all([
 				redis.get(REDIS_KEY_RULES),
 				redis.get(REDIS_KEY_LIVING_USERS),
 				redis.get(REDIS_KEY_DEAD_USERS),
 				redis.get(REDIS_KEY_GAME_STATE),
 				redis.get(REDIS_KEY_KILL_COUNTS),
+				redis.get(REDIS_KEY_LEADERBOARD),
 			]);
 
 			// The client needs to display the number of living users, but we don't want to send the full array of valid answers during submissions phase (since people could copy it)
@@ -94,7 +112,8 @@ export default async function handler(req, res) {
 				gameState: gameState,
 				serverTimestamp: lastUpdated,
 				killCounts: killCounts,
-				livingUsersCount: livingUsersCount
+				livingUsersCount: livingUsersCount,
+				leaderboard: leaderboard
 			});
 
 		} catch (error) {
@@ -105,7 +124,7 @@ export default async function handler(req, res) {
 
 	else if (req.method === "POST") {
 		try {
-			const { clientSecret, rules, livingUsers, deadUsers, gameState, killCounts } = req.body;
+			const { clientSecret, rules, livingUsers, deadUsers, gameState, killCounts, leaderboard } = req.body;
 
 			console.log("VERCEL DEBUG: Got POST");
 
@@ -148,6 +167,12 @@ export default async function handler(req, res) {
 				anythingUpdated = true;
 				res_message += " Updated kill counts.";
 				console.log("VERCEL DEBUG: Updated kill counts");
+			}
+			if (leaderboard) {
+				pipeline.set(REDIS_KEY_LEADERBOARD, JSON.stringify(leaderboard));
+				anythingUpdated = true;
+				res_message += " Updated leaderboard.";
+				console.log("VERCEL DEBUG: Updated leaderboard");
 			}
 
 			// If anything was updated, update a timestamp in DB

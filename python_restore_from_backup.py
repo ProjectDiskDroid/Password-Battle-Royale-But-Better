@@ -11,6 +11,7 @@ from sqlite_helper import get_all_values
 stored_rules = None
 stored_living_users = None
 stored_dead_users = None
+stored_leaderboard = None  # Optional - unlike the other 3, restoring it isn't required to proceed
 
 storage = get_all_values()
 for row in storage:
@@ -20,14 +21,16 @@ for row in storage:
         stored_living_users = json.loads(row['value'])
     elif row['key'] == "dead_users":
         stored_dead_users = json.loads(row['value'])
+    elif row['key'] == "leaderboard":
+        stored_leaderboard = json.loads(row['value'])
 
-print(f"\nGot the following values:\n\nRules:\n{stored_rules}\n\nLiving Users:\n{stored_living_users}\n\nDead Users:\n{stored_dead_users}\n\n")
+print(f"\nGot the following values:\n\nRules:\n{stored_rules}\n\nLiving Users:\n{stored_living_users}\n\nDead Users:\n{stored_dead_users}\n\nLeaderboard:\n{stored_leaderboard}\n\n")
 
-# If any of the 3 values are null or missing from DB, flag it here
+# If any of the 3 REQUIRED values are null or missing from DB, flag it here
 # This might be okay, but should double check that you're okay pushing that to server and wiping anything there
 if None in (stored_rules, stored_living_users, stored_dead_users):
     sys.exit(1)
 
-push_update(stored_rules, stored_living_users, stored_dead_users)  
+push_update(stored_rules, stored_living_users, stored_dead_users, leaderboard=stored_leaderboard)
 
 print(f"[green] Sent update to server!\n")
