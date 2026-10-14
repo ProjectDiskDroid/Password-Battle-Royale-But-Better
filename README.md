@@ -1,3 +1,6 @@
+# NOTE: THIS IS A FORK OF DOUGDOUG'S ORIGINAL REPO, I HAVE MERELY ADDED MORE PROMPTS, A LEADERBOARD TO TRACK USERS TOTAL WINS AND MORE
+
+
 # Battle Royale Password
 
 A Twitch game where viewers submit passwords that must following an increasingly complex set of rules. Inspired by Neal.fun!
